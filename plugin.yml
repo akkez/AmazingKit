@@ -1,0 +1,8 @@
+name: AmazingKit
+main: ru.akke.akit.AmazingKit
+version: 1.0
+author: akke
+website: http://akkez.ru/AmazingKit/
+commands: 
+   kit:
+      usage: /<command>
