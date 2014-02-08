@@ -17,94 +17,114 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import org.mcstats.Metrics;
 
-public class AmazingKit extends JavaPlugin {
-	
+public class AmazingKit extends JavaPlugin
+{
 	public FileConfiguration conf;
 	public Logger log;
-	public HashMap<String, Long> UserCooldowns = new HashMap<String, Long>(); //nick.kit -> timestamp 
-	public HashMap<String, ArrayList<ItemStack>> Kits = new HashMap<String, ArrayList<ItemStack>>(); 
-	public HashMap<String, Integer> KitCooldowns = new HashMap<String, Integer>();
-	public ArrayList<String> KitList = new ArrayList<String>();
-	public String FirstJoinKit;
-	public String Locale;
-	
+	public HashMap<String, Long> userCooldowns = new HashMap<String, Long>(); //nick.kit -> timestamp
+	public HashMap<String, ArrayList<ItemStack>> kits = new HashMap<String, ArrayList<ItemStack>>();
+	public HashMap<String, Integer> kitCooldowns = new HashMap<String, Integer>();
+	public ArrayList<String> kitList = new ArrayList<String>();
+	public String firstJoinKit;
+	public String locale;
+
 	@Override
-	public void onEnable() {
+	public void onEnable()
+	{
 		log = getServer().getLogger();
-		
-		if (!this.getDataFolder().exists()) {
+
+		if (!this.getDataFolder().exists())
+		{
 			this.getDataFolder().mkdir();
 			_log("Created " + this.getDataFolder() + " dir");
 		}
-		
+
 		conf = getConfig();
-		LoadConfiguration();
-		LoadDatabase();
-		
+		loadConfiguration();
+		loadDatabase();
+
 		getCommand("kit").setExecutor(new KitExecutor(this));
 		getServer().getPluginManager().registerEvents(new KitListener(this), this);
-		
-		try {
+
+		try
+		{
 			Metrics metrics = new Metrics(this);
-		    metrics.start();
-		} catch (Exception e) {
+			metrics.start();
+		}
+		catch (Exception e)
+		{
 			_log("Failed to enable PluginMetrics!");
 		}
-		
+
 		_log("Enabled!");
 	}
-	
-	@Override 
-	public void onDisable() {
-		SaveDatabase();
+
+	@Override
+	public void onDisable()
+	{
+		saveDatabase();
 		_log("Disabled!");
 	}
-	
-	public void _log(String arg) {
+
+	public void _log(String arg)
+	{
 		log.info("[" + this.getDescription().getName() + "] " + arg);
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	public void LoadDatabase() {
+	public void loadDatabase()
+	{
 		File f = new File(getDataFolder() + "/cooldowns.dat");
-		if (f.exists()) {
-			try {
+		if (f.exists())
+		{
+			try
+			{
 				ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
 				Object m = ois.readObject();
-				this.UserCooldowns = (HashMap<String, Long>) m;
+				this.userCooldowns = (HashMap<String, Long>) m;
 				ois.close();
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				e.printStackTrace();
 			}
 		}
 	}
-	
-	public void SaveDatabase() {
+
+	public void saveDatabase()
+	{
 		String kitname;
 		String s;
-		Iterator<String> it = this.UserCooldowns.keySet().iterator();
-		while (it.hasNext()) {
+		Iterator<String> it = this.userCooldowns.keySet().iterator();
+		while (it.hasNext())
+		{
 			s = it.next();
 			kitname = s.split(";")[0];
-			if (!this.KitCooldowns.containsKey(kitname)) {
+			if (!this.kitCooldowns.containsKey(kitname))
+			{
 				it.remove();
 				continue;
 			}
-			if (this.UserCooldowns.get(s) + this.KitCooldowns.get(kitname) * 1000 - System.currentTimeMillis() < 0) {
+			if (this.userCooldowns.get(s) + this.kitCooldowns.get(kitname) * 1000 - System.currentTimeMillis() < 0)
+			{
 				it.remove();
 			}
 		}
 		File f = new File(getDataFolder() + "/cooldowns.dat");
-		try {
+		try
+		{
 			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f));
-			oos.writeObject(this.UserCooldowns);
+			oos.writeObject(this.userCooldowns);
 			oos.close();
-		} catch (Exception e) {
+		}
+		catch (Exception e)
+		{
 			e.printStackTrace();
 		}
 	}
-	
-	public void LoadConfiguration() {
+
+	public void loadConfiguration()
+	{
 		conf.addDefault("messages.ru.dontHavePerm", "&cУ вас нет прав!");
 		conf.addDefault("messages.ru.consoleCantExecuteThis", "&cНельзя запустить это из консоли!");
 		conf.addDefault("messages.ru.noKitsAvailable", "&eНет доступных наборов");
@@ -118,19 +138,23 @@ public class AmazingKit extends JavaPlugin {
 		conf.addDefault("messages.ru.kitCleared", "&bНабор '&e%kname%&b' очищен!");
 		conf.addDefault("messages.ru.noItemInHand", "&cУ вас нет предмета в руке!");
 		conf.addDefault("messages.ru.typeCorrectInt", "&cВведите корректное число!");
-		conf.addDefault("messages.ru.kitSetCooldown", "&bВ наборе '&e%kname%&b' установлена перезарядка в &e%value%&b секунд");
+		conf.addDefault("messages.ru.kitSetCooldown",
+				"&bВ наборе '&e%kname%&b' установлена перезарядка в &e%value%&b секунд");
 		conf.addDefault("messages.ru.notEgoughSlots", "&cНедостаточно свободного места в инвентаре!");
 		conf.addDefault("messages.ru.kitCooldown", "&cЭтот набор можно получить только через %time%");
 		conf.addDefault("messages.ru.kitDispensed", "&bВыдан набор '&e%kname%&b'");
 		conf.addDefault("messages.ru.kitItemAdded", "&bВ набор '&e%kname%&b' добавлен предмет &e%item%");
-		conf.addDefault("messages.ru.kitItemSet", "&bВ набор '&e%kname%&b' на место &e%id%&b добавлен предмет &e%item%");
-		conf.addDefault("messages.ru.kitItemGet", "&bИз набора '&e%kname%&b' выдан предмет &e%item%&b под номером &e%id%");
-		conf.addDefault("messages.ru.kitItemDeleted", "&bИз набора '&e%kname%&b' удален предмет &e%item%&b под номером &e%id%");
+		conf.addDefault("messages.ru.kitItemSet",
+				"&bВ набор '&e%kname%&b' на место &e%id%&b добавлен предмет &e%item%");
+		conf.addDefault("messages.ru.kitItemGet",
+				"&bИз набора '&e%kname%&b' выдан предмет &e%item%&b под номером &e%id%");
+		conf.addDefault("messages.ru.kitItemDeleted",
+				"&bИз набора '&e%kname%&b' удален предмет &e%item%&b под номером &e%id%");
 		conf.addDefault("messages.ru.kitHelp", "&bСправка: ");
 		conf.addDefault("messages.ru.confReloaded", "&bКонфигурационный файл перезагружен.");
 		conf.addDefault("messages.ru.cooldownsCleared", "&bКулдаун китов обнулен.");
 		conf.addDefault("messages.ru.unknownCommandSyntax", "&cНеверный синтаксис команды!");
-		
+
 		conf.addDefault("messages.en.dontHavePerm", "&cYou don't have permission!");
 		conf.addDefault("messages.en.consoleCantExecuteThis", "&cCan't execute this from console!");
 		conf.addDefault("messages.en.noKitsAvailable", "&eList of available kits is empty.");
@@ -151,147 +175,183 @@ public class AmazingKit extends JavaPlugin {
 		conf.addDefault("messages.en.kitItemAdded", "&bAdded item &e%item% in kit '&e%kname%&b'");
 		conf.addDefault("messages.en.kitItemSet", "&bAdded item &e%item%&b in kit '&e%kname%&b' on position &e%id%");
 		conf.addDefault("messages.en.kitItemGet", "&bIssued item &e%item%&b from kit '&e%kname%&b' on position &e%id%");
-		conf.addDefault("messages.en.kitItemDeleted", "&bRemoved item &e%item%&b in kit '&e%kname%&b' on position &e%id%");
+		conf.addDefault("messages.en.kitItemDeleted",
+				"&bRemoved item &e%item%&b in kit '&e%kname%&b' on position &e%id%");
 		conf.addDefault("messages.en.kitHelp", "&bHelp: ");
 		conf.addDefault("messages.en.confReloaded", "&bConfiguration file reloaded.");
 		conf.addDefault("messages.en.cooldownsCleared", "&bUser cooldowns dropped.");
 		conf.addDefault("messages.en.unknownCommandSyntax", "&cWrong command syntax!");
-		
+
 		conf.addDefault("kitOnFirstJoin", "none");
 		conf.addDefault("locale", "en");
-		
+
 		conf.options().copyDefaults(true);
 		this.saveConfig();
 		this.reloadConfig();
 		conf = this.getConfig();
-		
-		this.FirstJoinKit = conf.getString("kitOnFirstJoin", "none");
-		this.Locale = conf.getString("locale", "en"); 
-		
-		Kits.clear();
-		KitCooldowns.clear();
-		KitList.clear();
-		
+
+		this.firstJoinKit = conf.getString("kitOnFirstJoin", "none");
+		this.locale = conf.getString("locale", "en");
+
+		kits.clear();
+		kitCooldowns.clear();
+		kitList.clear();
+
 		MemorySection ms = (MemorySection) conf.get("kits");
-		if (ms != null) {
-			for (String kitname : ms.getKeys(false)) {
+		if (ms != null)
+		{
+			for (String kitname : ms.getKeys(false))
+			{
 				kitname = kitname.toLowerCase();
-				KitList.add(kitname);
-				KitCooldowns.put(kitname, conf.getInt("kits." + kitname + ".cooldown", 0));
-				Kits.put(kitname, new ArrayList<ItemStack>());
+				kitList.add(kitname);
+				kitCooldowns.put(kitname, conf.getInt("kits." + kitname + ".cooldown", 0));
+				kits.put(kitname, new ArrayList<ItemStack>());
 				int i = 1;
-				while (conf.isItemStack("kits." + kitname + ".item" + i)) {
-					Kits.get(kitname).add(conf.getItemStack("kits." + kitname + ".item" + i));
+				while (conf.isItemStack("kits." + kitname + ".item" + i))
+				{
+					kits.get(kitname).add(conf.getItemStack("kits." + kitname + ".item" + i));
 					i++;
 				}
 			}
 		}
 	}
-	
-	public void SaveConfiguration() {
-		conf.set("kitOnFirstJoin", this.FirstJoinKit);
+
+	public void saveConfiguration()
+	{
+		conf.set("kitOnFirstJoin", this.firstJoinKit);
 		conf.set("kits", null);
 		String name;
-		for (int i = 0; i < KitList.size(); i++) {
-			name = KitList.get(i);
-			conf.set("kits." + name + ".cooldown", KitCooldowns.get(name));
-			
-			for (int j = 0; j < Kits.get(name).size(); j++) {
-				conf.set("kits." + name + ".item" + (j + 1), Kits.get(name).get(j));
+		for (int i = 0; i < kitList.size(); i++)
+		{
+			name = kitList.get(i);
+			conf.set("kits." + name + ".cooldown", kitCooldowns.get(name));
+
+			for (int j = 0; j < kits.get(name).size(); j++)
+			{
+				conf.set("kits." + name + ".item" + (j + 1), kits.get(name).get(j));
 			}
- 		}
-		
+		}
+
 		this.saveConfig();
 		this.reloadConfig();
 		conf = this.getConfig();
 	}
-	
-	public String getMsg(String arg) {
-		return conf.getString("messages." + this.Locale + "." + arg, "&4Configuration key [" + arg + "] not found")
-			.replace("&", "§");
+
+	public String getMsg(String arg)
+	{
+		return conf.getString("messages." + this.locale + "." + arg, "&4Configuration key [" + arg + "] not found")
+				.replace("&", "§");
 	}
-	
-	public String getRuTimeform(long arg) {
+
+	public String getRuTimeform(long arg)
+	{
 		long days = 0;
 		long hours = 0;
 		long minutes = 0;
 		String res = "";
 		String wordForm = "";
-		
-		if (arg >= 86400) {
+
+		if (arg >= 86400)
+		{
 			days = arg / 86400;
 			arg = arg - days * 86400;
 			wordForm = "дней";
 			if (days % 10 == 1)
+			{
 				wordForm = "день";
+			}
 			if ((days % 10 >= 2) && (days % 10 <= 4))
+			{
 				wordForm = "дня";
+			}
 			if ((days >= 5) && (days <= 20))
+			{
 				wordForm = "дней";
+			}
 			res += days + " " + wordForm + " ";
 		}
-		if (arg >= 3600) {
+		if (arg >= 3600)
+		{
 			hours = arg / 3600;
 			arg = arg - hours * 3600;
 			wordForm = "часов";
 			if (hours % 10 == 1)
+			{
 				wordForm = "час";
+			}
 			if ((hours % 10 >= 2) && (hours % 10 <= 4))
+			{
 				wordForm = "часа";
+			}
 			if ((hours >= 5) && (hours <= 20))
+			{
 				wordForm = "часов";
+			}
 			res += hours + " " + wordForm + " ";
 		}
-		if (arg >= 60) {
+		if (arg >= 60)
+		{
 			minutes = arg / 60;
-			
+
 			wordForm = "минут";
 			if (minutes % 10 == 1)
+			{
 				wordForm = "минуту";
+			}
 			if ((minutes % 10 >= 2) && (minutes % 10 <= 4))
+			{
 				wordForm = "минуты";
+			}
 			if ((minutes >= 5) && (minutes <= 20))
+			{
 				wordForm = "минут";
+			}
 			res += minutes + " " + wordForm;
 		}
 		res = res.trim();
-		if (res.equals("")) {
+		if (res.equals(""))
+		{
 			res = "несколько секунд";
 		}
-		
+
 		return res;
 	}
-	
-	public String getEnTimeform(long arg) {
+
+	public String getEnTimeform(long arg)
+	{
 		long days = 0;
 		long hours = 0;
 		long minutes = 0;
 		String res = "";
 		String wordForm = "";
-		
-		if (arg >= 86400) {
+
+		if (arg >= 86400)
+		{
 			days = arg / 86400;
 			arg = arg - days * 86400;
 			wordForm = "days";
 			res += days + " " + wordForm + " ";
 		}
-		if (arg >= 3600) {
+		if (arg >= 3600)
+		{
 			hours = arg / 3600;
 			arg = arg - hours * 3600;
 			wordForm = "hours";
 			res += hours + " " + wordForm + " ";
 		}
-		if (arg >= 60) {
+		if (arg >= 60)
+		{
 			minutes = arg / 60;
 			wordForm = "minutes";
 			res += minutes + " " + wordForm;
 		}
 		res = res.trim();
-		if (res.equals("")) {
+		if (res.equals(""))
+		{
 			res = "a few seconds";
 		}
-		
+
 		return res;
 	}
-	
+
 }
