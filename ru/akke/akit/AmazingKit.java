@@ -105,7 +105,7 @@ public class AmazingKit extends JavaPlugin
 				it.remove();
 				continue;
 			}
-			if (this.userCooldowns.get(s) + this.kitCooldowns.get(kitname) * 1000 - System.currentTimeMillis() < 0)
+			if (this.userCooldowns.get(s) + (long)this.kitCooldowns.get(kitname) * 1000 - System.currentTimeMillis() < 0)
 			{
 				it.remove();
 			}
@@ -172,7 +172,7 @@ public class AmazingKit extends JavaPlugin
 		conf.addDefault("messages.en.notEgoughSlots", "&cNot enough free space in inventory!");
 		conf.addDefault("messages.en.kitCooldown", "&cYou can get this kit after %time%");
 		conf.addDefault("messages.en.kitDispensed", "&bIssued kit '&e%kname%&b'");
-		conf.addDefault("messages.en.kitItemAdded", "&bAdded item &e%item% in kit '&e%kname%&b'");
+		conf.addDefault("messages.en.kitItemAdded", "&bAdded item &e%item%&b in kit '&e%kname%&b'");
 		conf.addDefault("messages.en.kitItemSet", "&bAdded item &e%item%&b in kit '&e%kname%&b' on position &e%id%");
 		conf.addDefault("messages.en.kitItemGet", "&bIssued item &e%item%&b from kit '&e%kname%&b' on position &e%id%");
 		conf.addDefault("messages.en.kitItemDeleted",

@@ -451,8 +451,7 @@ public class KitExecutor implements CommandExecutor
 
 		if (pl.userCooldowns.containsKey(kname + ";" + p.getName()))
 		{
-			long lastKit = pl.userCooldowns.get(kname + ";" + p.getName());
-			long diff = lastKit + pl.kitCooldowns.get(kname) * 1000 - System.currentTimeMillis();
+			long diff = pl.userCooldowns.get(kname + ";" + p.getName()) + ((long)pl.kitCooldowns.get(kname) * 1000) - System.currentTimeMillis();
 			if (diff > 0)
 			{
 				String timeform = null;
